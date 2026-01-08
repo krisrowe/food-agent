@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "food_name": {
+        "type": "string",
+        "description": "A concise, standard name for the food item."
+      },
+      "user_description": {
+        "type": "string",
+        "description": "The exact description provided by the user."
+      },
+      "standard_serving": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "object",
+            "properties": {
+              "amount": { "type": "number" },
+              "unit": { "type": "string" }
+            },
+            "required": ["amount", "unit"]
+          },
+          "nutrition": { "$ref": "#/definitions/NutritionalInfo" }
+        },
+        "required": ["size", "nutrition"]
+      },
+      "consumed": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "object",
+            "properties": {
+              "amount": { "type": "number" },
+              "unit": { "type": "string" }
+            },
+            "required": ["amount", "unit"]
+          },
+          "standard_servings": { "type": "number" },
+          "nutrition": { "$ref": "#/definitions/NutritionalInfo" },
+          "verified_calculation": { "type": "boolean" }
+        },
+        "required": ["size", "standard_servings", "nutrition", "verified_calculation"]
+      },
+      "confidence_score": { "type": "number", "minimum": 0, "maximum": 10 },
+      "source_notes": { "type": "string" }
+    },
+    "required": ["food_name", "user_description", "standard_serving", "consumed", "confidence_score"]
+  },
+  "definitions": {
+    "NutritionalInfo": {
+      "type": "object",
+      "properties": {
+        "calories": { "type": "number" },
+        "protein": { "type": "number" },
+        "carbs": { "type": "number" },
+        "fat": { "type": "number" },
+        "sodium": { "type": "number" },
+        "potassium": { "type": "number" },
+        "fiber": { "type": "number" },
+        "sugar": { "type": "number" },
+        "vitamin_c": { "type": "number", "default": 0 },
+        "calcium": { "type": "number", "default": 0 },
+        "iron": { "type": "number", "default": 0 }
+      },
+      "required": ["calories", "protein", "carbs", "fat", "sodium", "potassium", "fiber", "sugar"]
+    }
+  }
+}

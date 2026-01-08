@@ -1,0 +1,9 @@
+description = "Show the daily food log in a formatted table."
+prompt = """
+Please retrieve the user's food log for today using the `get_food_log` tool.
+
+Once you have the data, display it in a clean Markdown table with the following columns:
+| Food Item | Amount | Calories | Protein | Carbs | Fat |
+
+Ensure you include a 'TOTALS' row at the bottom of the table summing up the values.
+"""
