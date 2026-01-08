@@ -1,0 +1,18 @@
+description = "Install dependencies and register the MCP server."
+prompt = """
+Please run the following commands to set up the food agent:
+
+1. Install the package:
+   `make install`
+
+2. Register the MCP server:
+   `make register`
+
+**IMPORTANT:** Once the installation and registration are complete, you MUST restart Gemini for the new tools to be available in your session:
+- Type `/quit` to exit.
+- Restart with `gemini -r` (to restore your session) or simply `gemini`.
+
+**Final Step:** Once you've restarted, please describe something you've eaten today (e.g., "I had a cup of coffee and a bagel") to verify the agent is working and to log your first entry!
+
+Refer to README.md for more details and troubleshooting.
+"""
