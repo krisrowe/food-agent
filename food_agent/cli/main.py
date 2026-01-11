@@ -315,22 +315,33 @@ def register(scope, url, pat):
     final_pat = pat or "VJ-MdP4AO1Ft9b8xfNygG9BDhC56lmplMX7eYKiuZc4"
 
     # 5. Update Registration
-    data["mcpServers"]["food-agent"] = {
+    entry = {
         "url": final_url,
         "headers": {
             "Authorization": f"Bearer {final_pat}"
         }
     }
+    
+    # Idempotency check
+    if data["mcpServers"].get("food-agent") == entry:
+        click.echo(f"'food-agent' is already registered with these settings in {scope} scope.")
+    else:
+        data["mcpServers"]["food-agent"] = entry
+        # 6. Save
+        settings_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            with open(settings_path, "w") as f:
+                json.dump(data, f, indent=2)
+            click.echo(f"Successfully registered 'food-agent' in {scope} scope ({settings_path})")
+        except Exception as e:
+            click.echo(f"Error writing {settings_path}: {e}", err=True)
+            sys.exit(1)
 
-    # 6. Save
-    settings_path.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        with open(settings_path, "w") as f:
-            json.dump(data, f, indent=2)
-        click.echo(f"Successfully registered 'food-agent' in {scope} scope ({settings_path})")
-    except Exception as e:
-        click.echo(f"Error writing {settings_path}: {e}", err=True)
-        sys.exit(1)
+    # 7. Display External Client URL
+    external_url = f"{final_url.rstrip('/')}/?token={final_pat}"
+    click.echo("\n--- External Client Configuration ---")
+    click.echo(f"URL for Claude.ai / Custom Connect:\n{external_url}")
+    click.echo("--------------------------------------")
 
 if __name__ == "__main__":
     cli()
