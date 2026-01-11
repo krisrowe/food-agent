@@ -38,7 +38,7 @@ user_store = UserStore(data_dir=DATA_BASE_DIR)
 class SecretMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         # Health check bypass
-        if request.url.path in ["/health", "/"]:
+        if request.url.path == "/health":
             return await call_next(request)
         
         secret_header = request.headers.get("X-Admin-Secret")

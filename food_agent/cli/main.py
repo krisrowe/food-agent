@@ -284,5 +284,53 @@ def cloud_set_env(service, name, value, project_id, region):
     run_cmd(cmd)
     click.echo(f"Updated {name}={value} on {service}.", err=True)
 
+@cli.command("register")
+@click.option("--scope", type=click.Choice(["user", "project"]), default="user", help="Configuration scope")
+@click.option("--url", help="Override default MCP URL")
+@click.option("--pat", help="Override Personal Access Token")
+def register(scope, url, pat):
+    """Register the agent with Gemini CLI (manages settings.json)."""
+    # 1. Resolve Settings Path
+    if scope == "user":
+        settings_path = Path.home() / ".gemini" / "settings.json"
+    else:
+        settings_path = Path(".gemini") / "settings.json"
+
+    # 2. Load or Initialize Data
+    data = {}
+    if settings_path.exists():
+        try:
+            with open(settings_path, "r") as f:
+                data = json.load(f)
+        except Exception as e:
+            click.echo(f"Error reading {settings_path}: {e}", err=True)
+            sys.exit(1)
+
+    # 3. Ensure structure
+    if "mcpServers" not in data:
+        data["mcpServers"] = {}
+
+    # 4. Resolve URL and PAT (Default to the validated ones if not provided)
+    final_url = url or "https://food-agent-mcp-djxpmqqqzq-uc.a.run.app/"
+    final_pat = pat or "VJ-MdP4AO1Ft9b8xfNygG9BDhC56lmplMX7eYKiuZc4"
+
+    # 5. Update Registration
+    data["mcpServers"]["food-agent"] = {
+        "url": final_url,
+        "headers": {
+            "Authorization": f"Bearer {final_pat}"
+        }
+    }
+
+    # 6. Save
+    settings_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with open(settings_path, "w") as f:
+            json.dump(data, f, indent=2)
+        click.echo(f"Successfully registered 'food-agent' in {scope} scope ({settings_path})")
+    except Exception as e:
+        click.echo(f"Error writing {settings_path}: {e}", err=True)
+        sys.exit(1)
+
 if __name__ == "__main__":
     cli()
