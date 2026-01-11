@@ -24,16 +24,22 @@ user_store = UserStore(data_dir=DATA_BASE_DIR)
 
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
-        # Allow health checks bypass
+        # Health check bypass
         if request.url.path == "/health":
             return await call_next(request)
 
-        # Extract Authorization header
+        # Extract Authorization header or query param
         auth_header = request.headers.get("Authorization")
-        if not auth_header or not auth_header.startswith("Bearer "):
+        pat = None
+        
+        if auth_header and auth_header.startswith("Bearer "):
+            pat = auth_header.split(" ")[1]
+        else:
+            pat = request.query_params.get("token")
+
+        if not pat:
             return JSONResponse({"error": "Unauthorized"}, status_code=401)
 
-        pat = auth_header.split(" ")[1]
         user_email = user_store.get_user_by_pat(pat)
         
         if not user_email:

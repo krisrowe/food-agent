@@ -115,3 +115,46 @@ def test_get_food_log_over_http(tmp_path):
     finally:
         server_process.kill()
         server_process.wait()
+
+def test_auth_via_query_param(tmp_path):
+    """Verify that MCP server authenticates via ?token=... query param."""
+    # 1. Setup Data
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    users_file = data_dir / "users.csv"
+    users_file.write_text("query-pat,user@example.com\n")
+
+    # 2. Start Server
+    port = get_free_port()
+    env = os.environ.copy()
+    env["FOOD_AGENT_DATA"] = str(data_dir)
+    env["PYTHONPATH"] = os.getcwd()
+    env["MCP_ALLOWED_HOSTS"] = "localhost,127.0.0.1"
+    
+    server_process = subprocess.Popen(
+        [sys.executable, "-m", "uvicorn", "food_agent.mcp_service.app:app", 
+         "--host", "127.0.0.1", "--port", str(port)],
+        env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
+
+    time.sleep(5)
+    
+    try:
+        base_url = f"http://127.0.0.1:{port}"
+        # No Authorization header, use query param instead
+        payload = {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "tools/list",
+            "params": {}
+        }
+        
+        # Test root / with token param
+        response = requests.post(f"{base_url}/?token=query-pat", json=payload, headers={"Accept": "application/json"}, timeout=10)
+        assert response.status_code == 200
+        assert "log_meal" in response.text
+        print("\nIntegration Test PASSED: Auth via query param works.")
+
+    finally:
+        server_process.kill()
+        server_process.wait()

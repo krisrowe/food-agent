@@ -17,7 +17,7 @@
   },
   "mcpServers": {
     "food-agent": {
-      "url": "https://food-agent-mcp-djxpmqqqzq-uc.a.run.app/messages/",
+      "url": "https://food-agent-mcp-djxpmqqqzq-uc.a.run.app/",
       "headers": {
         "Authorization": "Bearer VJ-MdP4AO1Ft9b8xfNygG9BDhC56lmplMX7eYKiuZc4"
       }

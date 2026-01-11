@@ -31,6 +31,7 @@ class FoodAgentSDK:
     def log_food(self, food_entries: List[dict], entry_date: Optional[str] = None) -> Dict[str, Any]:
         try:
             self.config.ensure_directories()
+            logger.debug(f"Logging food to data_dir: {self.config.data_dir}")
             if entry_date:
                 try:
                     datetime.strptime(entry_date, "%Y-%m-%d")
