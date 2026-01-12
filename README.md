@@ -36,13 +36,68 @@ gemini mcp list
 We provide a professional-grade, free-tier eligible workflow to host your agent on Google Cloud using the **official recommended Stateless HTTP transport** for optimal scalability.
 
 ### Phase 1: Initialize Configuration
-...
-### Phase 3: Deploy to Cloud Run
-...
+
+Configure your deployment context by discovering (or specifying) your GCP project and storage bucket:
+
+```bash
+food-agent config init
+```
+
+This auto-discovers resources labeled `ai-food-log=default`, or prompts you to enter them manually. Configuration is saved to `~/.config/food-agent/deploy-context.json`.
+
+### Phase 2: Deploy to Cloud Run
+
+Deploy both services to Google Cloud:
+
+```bash
+food-agent deploy
+```
+
+This builds Docker images, pushes to GCR, and runs Terraform to provision:
+
 *   **Public Service:** `food-agent-mcp` (Authenticated via PAT).
     *   **Transport:** Stateless HTTP (JSON-RPC over POST).
     *   **Security:** DNS Rebinding protection configured via `MCP_ALLOWED_HOSTS`.
 *   **Private Service:** `food-agent-admin` (Authenticated via Google IAM).
+
+### Phase 3: Register Users
+
+Create user accounts and generate Personal Access Tokens (PATs):
+
+```bash
+# Register a user and get their PAT
+food-agent admin register user@example.com --show-token
+
+# List all registered users
+food-agent admin list
+
+# Show details for a specific user
+food-agent admin show user@example.com
+```
+
+The `--show-token` flag reveals the PAT on registration (it's masked by default for security).
+
+### Phase 4: Connect Your Agent
+
+Add the MCP server to your Gemini CLI settings (`~/.gemini/settings.json`):
+
+```json
+{
+  "mcpServers": {
+    "food-agent": {
+      "url": "https://YOUR-SERVICE-URL.run.app/",
+      "headers": {
+        "Authorization": "Bearer YOUR_PAT"
+      }
+    }
+  }
+}
+```
+
+For Claude.ai or other MCP clients that use URL-based auth:
+```
+https://YOUR-SERVICE-URL.run.app/?token=YOUR_PAT
+```
 
 ## Configuration & Paths
 
