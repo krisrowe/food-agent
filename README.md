@@ -1,183 +1,151 @@
 # Food Agent
 
-A specialized MCP agent for logging food consumption and managing a personal nutrition catalog. Designed for local use via stdio or remote deployment via Cloud Run.
+MCP server for food consumption logging and personal nutrition catalog management. Works locally via stdio (single user) or deployed as an HTTP service with multi-user auth.
 
-## Overview
+## Features
 
-This project provides a Model Context Protocol (MCP) server that enables an AI assistant (like Gemini CLI) to:
-1.  **Log Daily Meals:** Capture detailed nutritional data for food consumption.
-2.  **Manage a Personal Catalog:** Curate a list of frequently eaten foods with verified nutritional info.
-3.  **Cross-Platform Persistence:** Data stays synced between local and cloud environments via GCS FUSE.
+- **Daily food logging** with timezone-aware date boundaries and configurable day cutoff
+- **Nutrition catalog** for reusable food definitions with standard servings
+- **Entry management** — log, revise, move between dates, filter by name/pattern
+- **Per-user data scoping** when deployed as a multi-user HTTP service
 
-## Quick Start: Local Personal Agent
+## Local Usage (stdio)
 
-This is the standard scenario for most users: running the agent locally.
-
-### 1. Install
-```bash
-make install
-```
-*This installs the `food-agent` CLI and all dependencies.*
-
-### 2. Register
-```bash
-# Registers with Gemini CLI as a stdio tool
-gemini mcp add food-agent food-agent --stdio
-```
-
-### 3. Verify
-Restart your Gemini session (`gemini -r`) and verify:
-```bash
-gemini mcp list
-```
-
----
-
-## Cloud Deployment
-
-The following sections document the cloud hosting workflow, organized by persona.
-
-### Admin Persona
-
-Admins deploy and manage the cloud infrastructure. Requires `gcloud` CLI and GCP project access.
-
-#### Initial Setup
+### Install
 
 ```bash
-# 1. Initialize admin config (discovers GCP project/bucket)
-food-agent config init
-
-# 2. Deploy services to Cloud Run
-food-agent deploy
+pip install -e .
 ```
 
-Configuration is saved to `~/.config/food-agent/admin.yaml`.
+### Register with an MCP client
 
-This provisions:
-*   **Public Service:** `food-agent-mcp` (Authenticated via PAT)
-*   **Private Service:** `food-agent-admin` (Authenticated via Google IAM)
+**Claude Code:**
+```bash
+claude mcp add food-agent -- python -m food_agent.mcp.server
+```
 
-#### User Management
+**Gemini CLI:**
+```bash
+gemini mcp add food-agent -- python -m food_agent.mcp.server
+```
+
+### Use
+
+Start a conversation with your AI assistant and ask it to log food, show your food log, manage your catalog, etc.
+
+## HTTP Deployment (multi-user)
+
+For remote access from Claude.ai, mobile, or multiple devices, deploy as an HTTP service. The server uses [app-user](https://github.com/krisrowe/app-user) for JWT-based auth and user management.
+
+### Environment variables
+
+| Variable | Required | Default | Purpose |
+|----------|----------|---------|---------|
+| `SIGNING_KEY` | Yes (HTTP) | `dev-key` | JWT signing key |
+| `JWT_AUD` | No | None (skip) | Token audience validation |
+| `APP_USERS_PATH` | No | `~/.local/share/food-agent/users/` | Per-user data directory |
+| `MCP_PATH` | No | `/` | MCP endpoint path |
+
+### Run locally over HTTP
 
 ```bash
-# Add a new user
-food-agent admin users add user@example.com --show-token
-
-# List all users
-food-agent admin users list
-
-# Show user details (with token)
-food-agent admin users show user@example.com --show-token
-
-# Export config for handoff to end user
-food-agent admin users export user@example.com > user-config.yaml
+SIGNING_KEY=dev-key uvicorn food_agent.mcp.server:app
 ```
 
-#### Admin-to-User Handoff
+### Deploy with gapp
 
-The `export` command generates a YAML file with the service URL and PAT that can be sent to the end user:
+[gapp](https://github.com/krisrowe/gapp) deploys to Google Cloud Run with infrastructure, secrets, and GCS FUSE data volumes.
 
 ```bash
-# Admin exports config
-food-agent admin users export user@example.com > user-config.yaml
-
-# Send user-config.yaml to the user via email, Slack, etc.
+gapp init
+gapp setup <project-id>
+gapp deploy
 ```
 
----
+See gapp documentation for details on env var configuration and secrets management.
 
-### User Persona
+### Deploy without gapp
 
-End users consume the service. No `gcloud` or admin access required.
-
-#### Setup from Admin Handoff
+Any platform that runs Python ASGI apps works — Docker, Fly.io, Railway, etc. Set the environment variables above and run:
 
 ```bash
-# Import config received from admin (piped or redirected)
-cat user-config.yaml | food-agent user import
-
-# Or with overwrite behavior
-cat user-config.yaml | food-agent user import --overwrite=force
-cat user-config.yaml | food-agent user import --overwrite=fail
+uvicorn food_agent.mcp.server:app --host 0.0.0.0 --port 8080
 ```
 
-#### Manual Setup
+### User management
 
-```bash
-# Configure credentials manually
-food-agent user set --url https://YOUR-SERVICE-URL.run.app/ --pat YOUR_PAT
-```
+After deployment, use the [app-user](https://github.com/krisrowe/app-user) CLI or plugin to register users and manage access. Admin operations go through `/admin` REST endpoints on the running server.
 
-#### Verify & Use
+### MCP client configuration
 
-```bash
-# Show current config
-food-agent user show
-
-# View food log
-food-agent user log show
-food-agent user log show 2025-01-10
-```
-
-#### Gemini CLI Integration
-
-Add to `~/.gemini/settings.json`:
-
+**Claude Code / Gemini CLI (Authorization header):**
 ```json
 {
   "mcpServers": {
     "food-agent": {
-      "url": "https://YOUR-SERVICE-URL.run.app/",
+      "url": "https://YOUR-SERVICE-URL/mcp",
       "headers": {
-        "Authorization": "Bearer YOUR_PAT"
+        "Authorization": "Bearer YOUR_TOKEN"
       }
     }
   }
 }
 ```
 
-#### Claude.ai / Other MCP Clients
-
-Use URL-based auth:
+**Claude.ai (query param):**
 ```
-https://YOUR-SERVICE-URL.run.app/?token=YOUR_PAT
+https://YOUR-SERVICE-URL/mcp?token=YOUR_TOKEN
 ```
 
----
+## Configuration
 
-## Configuration & Paths
+### Timezone and day boundary
 
-The tool follows XDG conventions for configuration and data paths:
+`food_agent/app.yaml` configures when the calendar day rolls over:
 
-| File | Persona | Purpose |
-|------|---------|---------|
-| `~/.config/food-agent/admin.yaml` | Admin | GCP project, bucket, gcloud user |
-| `~/.config/food-agent/user.yaml` | User | Service URL and PAT |
-| `~/.local/share/food-agent/` | Both | Food log data |
+```yaml
+hours_offset: 4
+timezone: "America/Chicago"
+```
 
-Override with environment variables:
-- `FOOD_AGENT_CONFIG` - Config directory
-- `FOOD_AGENT_DATA` - Data directory
+`hours_offset: 4` means eating at 2 AM counts as the prior day (the new day starts at 4 AM). Adjustable for any schedule.
 
-Refer to [docs/PATHS-DESIGN.md](docs/PATHS-DESIGN.md) for full architecture.
+### Data paths
 
-## Authentication Strategy
+Local data follows XDG conventions:
+- Data: `~/.local/share/food-agent/`
+- Config: `~/.config/food-agent/`
 
-*   **Local (stdio):** Implicitly trusted (your local shell).
-*   **Remote (HTTP/SSE):**
-    *   **MCP Server:** Requires `Authorization: Bearer <PAT>`.
-    *   **Admin API:** Requires Google Identity (OIDC) + Signed Shared Secret.
-
-Refer to [food_agent/server/AUTH-DESIGN.md](food_agent/server/AUTH-DESIGN.md) for security details.
+Override with `FOOD_AGENT_DATA` and `FOOD_AGENT_CONFIG` env vars.
 
 ## Development
 
-*   **Structure:**
-    *   `food_agent/sdk/`: Shared business logic.
-    *   `food_agent/mcp/`: Protocol definition.
-    *   `food_agent/cli/`: Control Plane CLI.
-    *   `food_agent/mcp_service/`: Public Cloud Run entrypoint.
-    *   `food_agent/admin_service/`: Private Cloud Run entrypoint.
-*   **Commands:**
-    *   `make test`: Run verbose test suite.
-    *   `make clean`: Remove build artifacts.
+### Structure
+
+```
+food_agent/
+  __init__.py         # APP_NAME constant
+  sdk/                # All business logic
+    core.py           # Food logging, catalog, entry management
+    config.py         # Timezone, paths, XDG resolution
+    context.py        # User identity (re-exports from app-user)
+  mcp/
+    server.py         # MCP tool definitions (thin wrappers over SDK)
+  cli/                # Optional CLI commands
+```
+
+All behavior lives in the SDK. MCP tools and CLI commands are thin wrappers.
+
+### Tests
+
+```bash
+python -m pytest tests/unit/ -v
+```
+
+Sociable unit tests — no mocks, isolated via temp dirs and env vars.
+
+### Dependencies
+
+- [mcp](https://github.com/modelcontextprotocol/python-sdk) — FastMCP server framework
+- [app-user](https://github.com/krisrowe/app-user) — JWT auth, user management, per-user data storage
+- PyYAML — configuration
