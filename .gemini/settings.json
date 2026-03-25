@@ -12,7 +12,8 @@
       "../gemini-common-config"
     ],
     "fileName": [
-      "README.md"
+      "README.md",
+      "CONTRIBUTING.md"
     ]
   }
 }
