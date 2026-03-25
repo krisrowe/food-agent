@@ -1,54 +1,35 @@
 # Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-.env
-.venv
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
+*.py[cod]
 *.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+build/
+dist/
+.venv/
+venv/
+.eggs/
 
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
+# Environment
+.env
 
-# Pytest
+# Testing
 .pytest_cache/
 
-# Gemini folder (except settings.json)
+# Gemini (except settings.json)
 .gemini/*
 !.gemini/settings.json
 
-# Logs and Data
+# OS
+.DS_Store
+
+# Logs
 *.log
+
+# App data
 daily/*.json
 !daily/.keep
 catalog/*.json
 !catalog/default_catalog.json
 !catalog/README.md
 
-# OS
-.DS_Store
-
 # Temp working directory
 temp/
-
