@@ -34,8 +34,9 @@ __pycache__/
 # Pytest
 .pytest_cache/
 
-# Local configuration
-.gemini/tmp/
+# Gemini folder (except settings.json)
+.gemini/*
+!.gemini/settings.json
 
 # Logs and Data
 *.log
