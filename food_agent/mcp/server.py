@@ -20,7 +20,7 @@ auth_store = DataStoreAuthAdapter(store)
 sdk = FoodAgentSDK()
 
 # HTTP mode — ASGI app with auth + admin
-app = create_app(store=auth_store, inner_app=mcp.streamable_http_app())
+app = create_app(store=auth_store, inner_app=mcp.streamable_http_app(), mcp=mcp)
 
 
 @mcp.tool()
