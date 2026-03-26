@@ -7,7 +7,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         "mcp[cli]",
-        "app-user @ git+https://github.com/krisrowe/app-user.git",
+        "mcp-app @ git+https://github.com/krisrowe/mcp-app.git",
         "PyYAML",
         "rich",
     ],

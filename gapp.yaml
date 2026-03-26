@@ -1,6 +1,3 @@
-service:
-  entrypoint: food_agent.mcp.server:app
-
 public: true
 
 env:

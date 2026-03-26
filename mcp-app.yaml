@@ -1,0 +1,5 @@
+name: food-agent
+store: filesystem
+middleware:
+  - user-identity
+tools: food_agent.mcp.tools
