@@ -88,8 +88,8 @@ Tests verify complete features or SDK transactions end-to-end. No mocks unless n
 tests/
   unit/                        # Fast, offline, no credentials (DEFAULT)
     sdk/                       # SDK business logic tests — the bulk of tests
-      test_date_and_logging.py
-      test_multi_env.py
+      test_diet_core.py
+      test_user_data_paths.py
     mcp/                       # MCP transport tests (no network)
       test_diet_tools.py
     cli/                       # CLI transport tests
