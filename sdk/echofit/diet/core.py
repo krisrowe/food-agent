@@ -380,6 +380,48 @@ class DietSDK:
             logger.error(f"Error moving log entries: {e}")
             return {"error": str(e)}
 
+    def remove_log_entry(self, entry_id: str, entry_date: Optional[str] = None) -> Dict[str, Any]:
+        """Remove a food log entry by ID."""
+        try:
+            if entry_date:
+                try:
+                    datetime.strptime(entry_date, "%Y-%m-%d")
+                    target_date = entry_date
+                except ValueError:
+                    return {"error": f"Invalid date format: {entry_date}. Use YYYY-MM-DD."}
+            else:
+                target_date = self.config.get_effective_today().isoformat()
+
+            filename = f"{target_date}_food-log.json"
+            file_path = self.config.daily_log_dir / filename
+
+            if not file_path.exists():
+                return {"error": f"No logs found for {target_date}."}
+
+            with open(file_path, 'r') as f:
+                items = json.load(f)
+
+            before = len(items)
+            items = [item for item in items if item.get("id") != entry_id]
+
+            if len(items) == before:
+                return {"error": f"Entry '{entry_id}' not found on {target_date}."}
+
+            if items:
+                with open(file_path, 'w') as f:
+                    json.dump(items, f, indent=2)
+            else:
+                file_path.unlink()
+
+            return {
+                "success": True,
+                "message": f"Removed entry {entry_id} from {target_date}.",
+                "date": target_date,
+            }
+        except Exception as e:
+            logger.error(f"Error removing log entry: {e}")
+            return {"error": str(e)}
+
     def get_settings(self) -> Dict[str, Any]:
         """Return current effective configuration settings."""
         return self.config.get_settings()

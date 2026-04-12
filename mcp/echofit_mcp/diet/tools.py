@@ -94,6 +94,19 @@ async def move_food_log_entries(
     return sdk.move_log_entries(entry_ids, source_date, target_date)
 
 
+async def remove_food_log_entry(
+    entry_id: str,
+    entry_date: Optional[str] = None,
+) -> dict[str, Any]:
+    """Remove a food log entry.
+
+    Args:
+        entry_id: The ID of the entry to remove.
+        entry_date: Optional date in YYYY-MM-DD format (defaults to today).
+    """
+    return sdk.remove_log_entry(entry_id, entry_date)
+
+
 async def get_food_log_settings() -> dict[str, Any]:
     """Show the current food log configuration."""
     return sdk.get_settings()

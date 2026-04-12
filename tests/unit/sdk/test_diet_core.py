@@ -216,6 +216,33 @@ class TestMoveLogEntries:
         assert "Moved" in names
 
 
+# --- remove_log_entry ---
+
+class TestRemoveLogEntry:
+    def test_remove_entry_by_id(self, sdk):
+        sdk.log_food([{"food_name": "Apple"}, {"food_name": "Banana"}])
+        log = sdk.get_food_log()
+        apple_id = log["items"][0]["id"]
+        result = sdk.remove_log_entry(apple_id)
+        assert result["success"]
+        after = sdk.get_food_log()
+        assert len(after["items"]) == 1
+        assert after["items"][0]["food_name"] == "Banana"
+
+    def test_remove_nonexistent_entry(self, sdk):
+        sdk.log_food([{"food_name": "Apple"}])
+        result = sdk.remove_log_entry("bad-id")
+        assert "error" in result
+
+    def test_remove_last_entry_deletes_file(self, sdk, tmp_env):
+        sdk.log_food([{"food_name": "Apple"}])
+        log = sdk.get_food_log()
+        entry_id = log["items"][0]["id"]
+        sdk.remove_log_entry(entry_id)
+        after = sdk.get_food_log()
+        assert after["items"] == []
+
+
 # --- get_settings ---
 
 class TestGetSettings:

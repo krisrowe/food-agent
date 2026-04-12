@@ -15,6 +15,7 @@ from echofit_mcp.diet.tools import (  # noqa: F401
     update_food_in_catalog,
     remove_food_from_catalog,
     revise_food_log_entry,
+    remove_food_log_entry,
     move_food_log_entries,
     get_food_log_settings,
 )
